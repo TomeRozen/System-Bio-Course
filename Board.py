@@ -51,7 +51,10 @@ class Board:
         """prints the board nicely to the console"""
         # plt.clf()
         self.ax.imshow(self.board, cmap=plt.cm.binary)
-        plt.pause(0.1)
+        plt.pause(10)
+
+    def board_sum(self):
+        return np.sum(self.board)
 
 
 
