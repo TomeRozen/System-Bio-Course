@@ -35,6 +35,7 @@ class Game:
 
 
     def turn(self) -> None:
+
         vec_new_state = np.vectorize(self.new_state)
         # Calculate new state of all cells
         new_board = vec_new_state(np.arange(self.board.get_size()**2))
@@ -43,9 +44,12 @@ class Game:
 
     def run(self):
         for i in range(self.turns):
+            old_board = self.board.get_board().copy()
             self.board.print_board()
             self.turn()
             if self.board.board_sum() == 0:
+                break
+            if np.array_equal(old_board, self.board.get_board()):
                 break
 
         self.board.print_board()

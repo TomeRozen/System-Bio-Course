@@ -30,7 +30,6 @@ class Board:
         on_indices = np.random.choice(self.size**2, num_on, replace=False)
         self.board[np.unravel_index(on_indices, (self.size, self.size))] = 1
 
-
     def get_num_neighbours(self, x: int, y: int) -> int:
         """Returns the number of neighbours of a cell"""
         neighbours = 0
@@ -51,7 +50,7 @@ class Board:
         """prints the board nicely to the console"""
         # plt.clf()
         self.ax.imshow(self.board, cmap=plt.cm.binary)
-        plt.pause(10)
+        plt.pause(0.5)
 
     def board_sum(self):
         return np.sum(self.board)
