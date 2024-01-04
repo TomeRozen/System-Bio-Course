@@ -1,0 +1,13 @@
+Authors: Eyal Haluts, Tomer Rozenstine
+CS username: eyal_haluts, tomerozen
+IDS: 318456290, 315718908
+
+The following packages are required to run the program:
+-numpy
+-matplotlib
+
+You can install dependencies using pip install -r requirements.txt
+We recommend running the program from the command line.
+To run the program from the command line, use: python main.py, you can use -h for help
+and to find description of the parameters. The game will run and display the current state every
+~0.5 seconds.
