@@ -48,8 +48,10 @@ class Game:
             self.board.print_board()
             self.turn()
             if self.board.board_sum() == 0:
+                print("All cells are dead! Simulation over.")
                 break
             if np.array_equal(old_board, self.board.get_board()):
+                print("Board is stable! Simulation over.")
                 break
 
         self.board.print_board()
