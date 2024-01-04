@@ -9,8 +9,15 @@ TURNS = 10000
 
 class Game:
     def __init__(self, board_size=BOARD_SIZE, begin_alive=BEGIN_ALIVE, turns=TURNS):
+        if board_size < 1:
+            raise ValueError("Board size must be at least 1!")
+        if begin_alive < 0:
+            raise ValueError("Number of cells that begin alive must be at least 0!")
         if begin_alive > board_size**2:
             raise ValueError("Number of cells that begin alive must be smaller than size of board!")
+        if turns < 1:
+            raise ValueError("Number of turns must be at least 1!")
+
         self.board = Board(board_size)
         self.board.random_init(begin_alive)
         self.turns = turns
