@@ -9,65 +9,61 @@ UNINFECTED_DEATH_RATE = 0.00136
 LATENT_DEATH_RATE = UNINFECTED_DEATH_RATE
 INFECTED_DEATH_RATE = 0.33
 VIRION_INFECTION_RATE = 0.00027
-LATENT_TO_INFECTED_RATE = 0.05
-VIRUS_DEATH_RATE = 2  # TODO: Make sure it makes sense when deciding on time step
+VIRUS_DEATH_RATE = 2
+TREATMENT_KILL_RATE = 2
 
 UNINFECTED_TO_LATENT_RATE = 0.2
 UNINFECTED_TO_INFECTED_RATE = 1 - UNINFECTED_TO_LATENT_RATE
 
-RUN_TIME = 3500  # days
+RUN_TIME = 7500  # days
 TIME_STEP = 0.05  # days
 NUM_STEPS = int(RUN_TIME / TIME_STEP)
-LATENT_BEGINNING = 2000 / TIME_STEP
+LATENT_BEGINNING = 800 / TIME_STEP
 
 def delta_u(uninfected, virion):
     return ((UNINFECTED_PRODUCTION - uninfected * virion * VIRION_INFECTION_RATE - UNINFECTED_DEATH_RATE * uninfected) *
             TIME_STEP)
 
 
-def delta_i(uninfected, virion, latent, infected):
-    return ((UNINFECTED_TO_INFECTED_RATE * uninfected * virion * VIRION_INFECTION_RATE) + (LATENT_TO_INFECTED_RATE * latent)
+def delta_i(uninfected, virion, latent, infected, latent_rate=0.05):
+    return ((UNINFECTED_TO_INFECTED_RATE * uninfected * virion * VIRION_INFECTION_RATE) + (latent_rate * latent)
             - (INFECTED_DEATH_RATE * infected)) * TIME_STEP
 
 
-def delta_v(virion, infected):
-    return (ALPHA * infected - VIRUS_DEATH_RATE * virion) * TIME_STEP
+def delta_v(virion, infected, treatment=False):
+    if not treatment:
+        return (ALPHA * infected - VIRUS_DEATH_RATE * virion) * TIME_STEP
+    else:
+        return (ALPHA * infected - VIRUS_DEATH_RATE * virion - TREATMENT_KILL_RATE * virion) * TIME_STEP
 
 
-def delta_l(uninfected, virion, latent):
+def delta_l(uninfected, virion, latent, latent_rate=0.05):
     return (UNINFECTED_TO_LATENT_RATE * uninfected * virion * VIRION_INFECTION_RATE - LATENT_DEATH_RATE * latent -
-            LATENT_TO_INFECTED_RATE * latent) * TIME_STEP
+            latent_rate * latent) * TIME_STEP
 
 
-def run_step(virion, uninfected, latent, infected, i):
-    virion[i] = virion[i - 1] + delta_v(virion[i - 1], infected[i - 1])
+def run_step(virion, uninfected, latent, infected, latent_rate, i, treatment):
+    virion[i] = virion[i - 1] + delta_v(virion[i - 1], infected[i - 1], treatment)
     uninfected[i] = uninfected[i - 1] + delta_u(uninfected[i - 1], virion[i - 1])
-    latent[i] = latent[i - 1] + delta_l(uninfected[i - 1], virion[i - 1], latent[i - 1])
-    infected[i] = infected[i - 1] + delta_i(uninfected[i - 1], virion[i - 1], latent[i - 1], infected[i - 1])
+    latent[i] = latent[i - 1] + delta_l(uninfected[i - 1], virion[i - 1], latent[i - 1],  latent_rate)
+    infected[i] = infected[i - 1] + delta_i(uninfected[i - 1], virion[i - 1], latent[i - 1], infected[i - 1],
+                                            latent_rate)
 
 
-
-if __name__ == '__main__':
-
+def original_model(virion, uninfected, latent, infected):
     # Run twice, once with latent to infected from begging, and once with latent to infected after reaching equilibrium
     for i in range(2):
-        virion = np.zeros(NUM_STEPS)
-        uninfected = np.zeros(NUM_STEPS)
-        latent = np.zeros(NUM_STEPS)
-        infected = np.zeros(NUM_STEPS)
-
-        virion[0] = 10
-        uninfected[0] = 500
-
         for j in range(1, NUM_STEPS):
-            if i == 0:
-                run_step(virion, uninfected, latent, infected, j)
-            else:
+            if i == 0:  # If latent to infected starts from beginning
+                latent_rate = 0.05
+                run_step(virion, uninfected, latent, infected, latent_rate, j, False)
+            else:  # If latent outbreaks only after reaching equilibrium
                 if j < LATENT_BEGINNING:
-                    LATENT_TO_INFECTED_RATE = 0
+                    latent_rate = 0
+                    run_step(virion, uninfected, latent, infected, latent_rate, j, False)
                 else:
-                    LATENT_TO_INFECTED_RATE = 0.05
-                run_step(virion, uninfected, latent, infected, j)
+                    latent_rate = 0.05
+                    run_step(virion, uninfected, latent, infected, latent_rate, j, False)
 
         # Plot all the equations on same graph with plotly
         fig = go.Figure()
@@ -75,11 +71,12 @@ if __name__ == '__main__':
         fig.add_trace(go.Scatter(x=np.arange(0, RUN_TIME, TIME_STEP), y=uninfected, name="Uninfected"))
         fig.add_trace(go.Scatter(x=np.arange(0, RUN_TIME, TIME_STEP), y=latent, name="Latent"))
         fig.add_trace(go.Scatter(x=np.arange(0, RUN_TIME, TIME_STEP), y=infected, name="Infected"))
-        if i == 0:
+        if i == 0:  # If latent to infected starts from beginning
             fig.update_layout(title="HIV model with latent to infected from beginning", xaxis_title="Time (days)",
                               yaxis_title="Number of cells")
             fig.write_html(f"../Figs/HIV Model Latent from Beginning.html")
-        else:
+        else:  # If latent outbreaks only after reaching equilibrium
+            # Add vertical line to show when latent to infected starts
             fig.add_shape(
                 dict(
                     type='line',
@@ -101,8 +98,64 @@ if __name__ == '__main__':
                     font=dict(color='black')
                 )
             )
-            fig.update_layout(title="HIV model with latent to infected after reaching equilibrium", xaxis_title="Time (days)",
+            fig.update_layout(title="HIV model with latent to infected after reaching equilibrium",
+                              xaxis_title="Time (days)",
                               yaxis_title="Number of cells")
             fig.write_html(f"../Figs/HIV Model Latent after Equilibrium.html")
 
         fig.show()
+
+
+def treatment_model(virion, uninfected, latent, infected):
+    # Run twice, once with  just treatment, and once with treatment and higher latent to infected rate
+    for i in range(2):
+        for j in range(1, NUM_STEPS):
+            if i == 0:  # If just treatment
+                if 0 <= (j % LATENT_BEGINNING) < (50 / TIME_STEP) and j > LATENT_BEGINNING:
+                    latent_rate = 0.05
+                else:
+                    latent_rate = 0
+                run_step(virion, uninfected, latent, infected, latent_rate, j, True)
+            else:  # If treatment and higher latent to infected rate
+                if 0 <= (j % LATENT_BEGINNING) < (50 / TIME_STEP) and j > LATENT_BEGINNING:
+                    latent_rate = 0.5
+                else:
+                    latent_rate = 0
+                run_step(virion, uninfected, latent, infected, latent_rate, j, True)
+
+        # Plot all the equations on same graph with plotly
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=np.arange(0, RUN_TIME, TIME_STEP), y=virion, name="Virion"))
+        fig.add_trace(go.Scatter(x=np.arange(0, RUN_TIME, TIME_STEP), y=uninfected, name="Uninfected"))
+        fig.add_trace(go.Scatter(x=np.arange(0, RUN_TIME, TIME_STEP), y=latent, name="Latent"))
+        fig.add_trace(go.Scatter(x=np.arange(0, RUN_TIME, TIME_STEP), y=infected, name="Infected"))
+        if i == 0:
+            fig.update_layout(title="HIV model with treatment", xaxis_title="Time (days)",
+                              yaxis_title="Number of cells")
+            fig.write_html(f"../Figs/HIV Model Treatment.html")
+        else:
+            fig.update_layout(title="HIV model with treatment and higher latent to infected rate",
+                              xaxis_title="Time (days)",
+                              yaxis_title="Number of cells")
+            fig.write_html(f"../Figs/HIV Model Treatment and Latent.html")
+        fig.show()
+
+
+def init_arrays():
+    virion = np.zeros(NUM_STEPS)
+    uninfected = np.zeros(NUM_STEPS)
+    latent = np.zeros(NUM_STEPS)
+    infected = np.zeros(NUM_STEPS)
+
+    virion[0] = 10
+    uninfected[0] = 500
+
+    return virion, uninfected, latent, infected
+
+
+if __name__ == '__main__':
+    # virion, uninfected, latent, infected = init_arrays()
+    # original_model(virion, uninfected, latent, infected)
+
+    virion, uninfected, latent, infected = init_arrays()
+    treatment_model(virion, uninfected, latent, infected)
