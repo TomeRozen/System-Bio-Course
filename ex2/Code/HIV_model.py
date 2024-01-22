@@ -18,7 +18,7 @@ UNINFECTED_TO_INFECTED_RATE = 1 - UNINFECTED_TO_LATENT_RATE
 RUN_TIME = 7500  # days
 TIME_STEP = 0.05  # days
 NUM_STEPS = int(RUN_TIME / TIME_STEP)
-LATENT_BEGINNING = 800 / TIME_STEP
+LATENT_BEGINNING = 2000 / TIME_STEP
 
 def delta_u(uninfected, virion):
     return ((UNINFECTED_PRODUCTION - uninfected * virion * VIRION_INFECTION_RATE - UNINFECTED_DEATH_RATE * uninfected) *
@@ -107,20 +107,20 @@ def original_model(virion, uninfected, latent, infected):
 
 
 def treatment_model(virion, uninfected, latent, infected):
-    # Run twice, once with  just treatment, and once with treatment and higher latent to infected rate
+    # Run twice, once with just treatment, and once with treatment and higher latent to infected rate
     for i in range(2):
         for j in range(1, NUM_STEPS):
             if i == 0:  # If just treatment
-                if 0 <= (j % LATENT_BEGINNING) < (50 / TIME_STEP) and j > LATENT_BEGINNING:
-                    latent_rate = 0.05
-                else:
+                if j < LATENT_BEGINNING:
                     latent_rate = 0
+                else:
+                    latent_rate = 0.05
                 run_step(virion, uninfected, latent, infected, latent_rate, j, True)
             else:  # If treatment and higher latent to infected rate
-                if 0 <= (j % LATENT_BEGINNING) < (50 / TIME_STEP) and j > LATENT_BEGINNING:
-                    latent_rate = 0.5
-                else:
+                if j < LATENT_BEGINNING:
                     latent_rate = 0
+                else:
+                    latent_rate = 0.5
                 run_step(virion, uninfected, latent, infected, latent_rate, j, True)
 
         # Plot all the equations on same graph with plotly
@@ -154,8 +154,8 @@ def init_arrays():
 
 
 if __name__ == '__main__':
-    # virion, uninfected, latent, infected = init_arrays()
-    # original_model(virion, uninfected, latent, infected)
+    virion, uninfected, latent, infected = init_arrays()
+    original_model(virion, uninfected, latent, infected)
 
     virion, uninfected, latent, infected = init_arrays()
     treatment_model(virion, uninfected, latent, infected)

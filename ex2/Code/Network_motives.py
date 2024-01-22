@@ -57,25 +57,34 @@ def check_neighbours_rule(matrix, domain):
 
 
 def count_motifs(matrix, verbose=False):
+    """
+    Count the number of occurrences of the given motif as described in the exercise, in the given matrix.
+    """
+
+    # Calculate total interactions number for each two nodes
     abs_matrix = np.abs(matrix)
     total_interactions = abs_matrix + abs_matrix.T
     np.fill_diagonal(total_interactions, 0)
+
+    # Count the number of mutual interactions in the matrix, which is the number of 2's in the matrix
     mutual_interactions = np.sum(total_interactions == 2)
     if verbose:
         print("Number of mutual interactions in Matrix: ", mutual_interactions)
 
     # Extract coordinates of mutual interactions
     mutual_interactions_coordinates = np.argwhere(total_interactions == 2)
-    # For each mutual interaction, iterate over all other nueurons, and check if it's regulated by the first neuron,
-    # and regulates the second neuron
 
+    # For each mutual interaction, iterate over all other nodes, and check if it's regulated by the first node,
+    # and regulates the second node
     motif_in_network = []
     for interaction in mutual_interactions_coordinates:
         Y = interaction[0]
         W = interaction[1]
         for X in range(celeg_matrix.shape[0]):
+            # check if exists Y->X->W
             if ((celeg_matrix[Y, X] != 0 and celeg_matrix[X, Y] == 0 and celeg_matrix[X, W] != 0)
                     and celeg_matrix[W, X] == 0) and X != W and X != Y:
+                # check if exists Y->Z
                 for Z in range(celeg_matrix.shape[0]):
                     if celeg_matrix[W, Z] == 0 and celeg_matrix[Z, W] == 0 and celeg_matrix[Z, Y] == 0 and\
                             celeg_matrix[Y, Z] != 0 and celeg_matrix[X, Z] == 0 and celeg_matrix[Z, X] == 0 and\
@@ -90,7 +99,7 @@ def count_motifs(matrix, verbose=False):
 
 
 if __name__ == '__main__':
-    # load the coliAdj.txt to a numpy array
+    # load the coliAdj.txt and elegansAdj.txt to numpy arrays
     ecoly_matrix = np.genfromtxt("../Resources/coliAdj.txt", delimiter=',', invalid_raise=False)
     celeg_matrix = np.genfromtxt("../Resources/elegansAdj.txt", delimiter=' ', invalid_raise=False, dtype=np.int32)
 
@@ -105,15 +114,15 @@ if __name__ == '__main__':
     print("Number of activatory interactions: ", activatory)
 
     # Q3
-    # Count number of non regulated genes, where the sum of it's column is 0
+    # Count number of non regulated genes, which are genes that the sum of their column is 0
     non_regulated = np.sum(np.count_nonzero(ecoly_matrix, axis=0) == 0)
     print("Number of non regulated genes: ", non_regulated)
 
     # Q4a
-    # check_neighbours_rule(
-    #     ecoly_matrix,
-    #     domain="E. coli genes"
-    # )
+    check_neighbours_rule(
+        ecoly_matrix,
+        domain="E. coli genes"
+    )
 
     # Q5a
     abs_matrix = np.abs(ecoly_matrix)
@@ -121,20 +130,22 @@ if __name__ == '__main__':
     np.fill_diagonal(total_interactions, 0)
     mutual_interactions = np.sum(total_interactions == 2)
     print("Number of mutual interactions in E. coly: ", mutual_interactions)
+    # There are 0 mutual interactions in the E. coly network, which means there are no Y<->W interactions,
+    # therefore the motif doesn't exist in the network
 
     # Q4b
-    # check_neighbours_rule(
-    #     celeg_matrix,
-    #     domain="C. elegans neurons"
-    # )
+    check_neighbours_rule(
+        celeg_matrix,
+        domain="C. elegans neurons"
+    )
 
     #Q5b
     # count the number of mutual interactions in the celeg matrix
     num_orig_motifs = count_motifs(celeg_matrix, verbose=True)
 
-    # randomize the celeg matrix 1000 times, and count the number of motifs in each randomization
+    # randomize the celeg matrix 100 times, and count the number of motifs in each randomization
     num_motifs = []
-    for i in range(1000):
+    for i in range(100):
         print(f"Randomization number {i}")
         shuffled = np.random.permutation(celeg_matrix.flatten()).reshape(celeg_matrix.shape)
         num_motifs.append(count_motifs(shuffled))
