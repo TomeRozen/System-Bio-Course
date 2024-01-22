@@ -15,10 +15,10 @@ VIRUS_DEATH_RATE = 2  # TODO: Make sure it makes sense when deciding on time ste
 UNINFECTED_TO_LATENT_RATE = 0.2
 UNINFECTED_TO_INFECTED_RATE = 1 - UNINFECTED_TO_LATENT_RATE
 
-RUN_TIME = 2000  # days
+RUN_TIME = 3500  # days
 TIME_STEP = 0.05  # days
 NUM_STEPS = int(RUN_TIME / TIME_STEP)
-
+LATENT_BEGINNING = 2000 / TIME_STEP
 
 def delta_u(uninfected, virion):
     return ((UNINFECTED_PRODUCTION - uninfected * virion * VIRION_INFECTION_RATE - UNINFECTED_DEATH_RATE * uninfected) *
@@ -26,8 +26,8 @@ def delta_u(uninfected, virion):
 
 
 def delta_i(uninfected, virion, latent, infected):
-    return (UNINFECTED_TO_INFECTED_RATE * uninfected * virion * VIRION_INFECTION_RATE + LATENT_TO_INFECTED_RATE * latent
-            - INFECTED_DEATH_RATE * infected - infected) * TIME_STEP
+    return ((UNINFECTED_TO_INFECTED_RATE * uninfected * virion * VIRION_INFECTION_RATE) + (LATENT_TO_INFECTED_RATE * latent)
+            - (INFECTED_DEATH_RATE * infected)) * TIME_STEP
 
 
 def delta_v(virion, infected):
@@ -63,7 +63,7 @@ if __name__ == '__main__':
             if i == 0:
                 run_step(virion, uninfected, latent, infected, j)
             else:
-                if j < 200:
+                if j < LATENT_BEGINNING:
                     LATENT_TO_INFECTED_RATE = 0
                 else:
                     LATENT_TO_INFECTED_RATE = 0.05
@@ -78,20 +78,31 @@ if __name__ == '__main__':
         if i == 0:
             fig.update_layout(title="HIV model with latent to infected from beginning", xaxis_title="Time (days)",
                               yaxis_title="Number of cells")
+            fig.write_html(f"../Figs/HIV Model Latent from Beginning.html")
         else:
+            fig.add_shape(
+                dict(
+                    type='line',
+                    x0=2000,
+                    x1=2000,
+                    y0=0,
+                    y1=12500,
+                    line=dict(color='black', width=2, dash='dash'),
+                )
+            )
+
+            # Add text annotation
+            fig.add_annotation(
+                dict(
+                    x=1800,
+                    y=12000,
+                    text='Latent Outbreak',
+                    showarrow=False,
+                    font=dict(color='black')
+                )
+            )
             fig.update_layout(title="HIV model with latent to infected after reaching equilibrium", xaxis_title="Time (days)",
                               yaxis_title="Number of cells")
+            fig.write_html(f"../Figs/HIV Model Latent after Equilibrium.html")
+
         fig.show()
-
-
-    # plt.plot(np.arange(0, RUN_TIME, TIME_STEP), virion, label="Virion")
-    # plt.plot(np.arange(0, RUN_TIME, TIME_STEP), uninfected, label="Uninfected")
-    # plt.plot(np.arange(0, RUN_TIME, TIME_STEP), latent, label="Latent")
-    # plt.plot(np.arange(0, RUN_TIME, TIME_STEP), infected, label="Infected")
-    # plt.legend()
-    # plt.show()
-
-
-
-
-
