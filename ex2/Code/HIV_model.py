@@ -74,7 +74,8 @@ def original_model(virion, uninfected, latent, infected):
         if i == 0:  # If latent to infected starts from beginning
             fig.update_layout(title="HIV model with latent to infected from beginning", xaxis_title="Time (days)",
                               yaxis_title="Number of cells")
-            fig.write_html(f"../Figs/HIV Model Latent from Beginning.html")
+            fig.write_html(f"../Figs/HIV Model Latent from Beginning.html", full_html=False, include_plotlyjs='cdn')
+
         else:  # If latent outbreaks only after reaching equilibrium
             # Add vertical line to show when latent to infected starts
             fig.add_shape(
@@ -101,7 +102,7 @@ def original_model(virion, uninfected, latent, infected):
             fig.update_layout(title="HIV model with latent to infected after reaching equilibrium",
                               xaxis_title="Time (days)",
                               yaxis_title="Number of cells")
-            fig.write_html(f"../Figs/HIV Model Latent after Equilibrium.html")
+            fig.write_html(f"../Figs/HIV Model Latent after Equilibrium.html", full_html=False, include_plotlyjs='cdn')
 
         fig.show()
 
@@ -132,12 +133,12 @@ def treatment_model(virion, uninfected, latent, infected):
         if i == 0:
             fig.update_layout(title="HIV model with treatment", xaxis_title="Time (days)",
                               yaxis_title="Number of cells")
-            fig.write_html(f"../Figs/HIV Model Treatment.html")
+            fig.write_html(f"../Figs/HIV Model Treatment.html", full_html=False, include_plotlyjs='cdn')
         else:
             fig.update_layout(title="HIV model with treatment and higher latent to infected rate",
                               xaxis_title="Time (days)",
                               yaxis_title="Number of cells")
-            fig.write_html(f"../Figs/HIV Model Treatment and Latent.html")
+            fig.write_html(f"../Figs/HIV Model Treatment and Latent.html", full_html=False, include_plotlyjs='cdn')
         fig.show()
 
 
